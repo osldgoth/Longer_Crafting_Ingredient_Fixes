@@ -1,4 +1,4 @@
-function countIngredients(name, ingredientList) --remember remove name(was used for log info)
+function countIngredients(ingredientList) --remember remove name(was used for log info)
 	local numOfIngredients = 0
 	for _,oneIngredient in pairs(ingredientList) do
 		if oneIngredient[2] == nil then
@@ -15,7 +15,7 @@ function countIngredients(name, ingredientList) --remember remove name(was used 
 end
 	
 function craftTime(ingredientCount, techLvl)
-	return math.ceil(string.format("%.2f", techLvl + math.log(ingredientCount^(techLvl + 1))) * 2) / 2
+		return math.ceil(string.format("%.2f", techLvl + math.log(ingredientCount^(techLvl + 1))) * 2) / 2
 end
 
 --*** 'fix' recipes
@@ -1200,10 +1200,33 @@ for _,recipe in pairs(data.raw.recipe) do
 	else
 		lvl = 1
 	end
-	if recipe.expensive == nil then
-		recipe.energy_required = craftTime(countIngredients(recipe.name, recipe.ingredients), lvl)
-	else
-		recipe.expensive.energy_required = craftTime(countIngredients(recipe.name, recipe.expensive.ingredients), lvl)
-		recipe.normal.energy_required = craftTime(countIngredients(recipe.name, recipe.normal.ingredients), lvl)
+	
+	if recipe.expensive == nil then 
+		if next(recipe.ingredients) then --don't do recipes that have no ingredients
+			if recipe.energy_required == nil then
+				recipe.energy_required = 0.5
+			end
+			log("old: "..recipe.name.." "..recipe.energy_required)
+			recipe.energy_required = craftTime(countIngredients(recipe.ingredients), lvl)
+			log("new: "..recipe.name.." "..recipe.energy_required)
+		end
+	else --recipe.expensive != nil
+		if next(recipe.expensive.ingredients) then
+			if recipe.expensive.energy_required == nil then
+				recipe.expensive.energy_required = 0.5
+			end
+			log("old expensive: "..recipe.name.." "..recipe.expensive.energy_required)
+			recipe.expensive.energy_required = craftTime(countIngredients(recipe.expensive.ingredients), lvl)
+			log("new expensive: "..recipe.name.." "..recipe.expensive.energy_required)
+		end
+		
+		if next(recipe.normal.ingredients) then
+			if recipe.normal.energy_required == nil then
+				recipe.normal.energy_required = 0.5
+			end
+			log("old normal: "..recipe.name.." "..recipe.normal.energy_required)
+			recipe.normal.energy_required = craftTime(countIngredients(recipe.normal.ingredients), lvl)
+			log("new normal: "..recipe.name.." "..recipe.normal.energy_required)
+		end
 	end
 end
